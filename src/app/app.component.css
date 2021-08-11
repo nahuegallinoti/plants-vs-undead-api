@@ -1,0 +1,14 @@
+.row {
+    justify-content: center;
+    margin-top: 2vw;
+  }
+  
+  button {
+    width: 10em;
+    height: 3em;
+  }
+  
+  label {
+    font-size: 20px;
+    padding-bottom: 1em;
+  }
