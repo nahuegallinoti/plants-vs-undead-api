@@ -12,9 +12,6 @@
 <body>
     <div class="container">
         <div class="row align-items-center justify-content-center">
-            <div class="pt-4 row" *ngIf="plants.length > 0 && !searchManual">
-                <button type="submit" (click)="avanzarPagina()" class="btn btn-primary btn-lg btn-block"> ➔ </button>
-            </div>
 
             <div class="col-4">
                 <img src="./../assets/Plant-vs-Undead.jpg" alt="Plants Vs Undead" width="300" height="90" style="margin-left: 8vh; margin-top: 10px;">
@@ -26,13 +23,10 @@
                         <input type="text" class="form-control text-center" placeholder="Token" formControlName="token" />
                     </div>
                     <div class="pt-4 row">
-                        <button type="submit" class="btn btn-primary btn-lg btn-block"> BUSQUEDA AUTOMÁTICA </button>
+                        <button type="submit" class="btn btn-primary btn-lg btn-block"> BUSCAR </button>
                     </div>
-                    <div class="pt-4 row">
-                        <button type="submit" class="btn btn-primary btn-lg btn-block"> BUSQUEDA AUTOMÁTICA </button>
-                    </div>
-                    <div class="pt-4 row" *ngIf="plants.length > 0">
-                        <button type="submit" (click)="limpiar()" class="btn btn-primary btn-lg btn-block"> LIMPIAR
+                    <div class="pt-4 row" *ngIf="plantasMenosRegadas.length > 0 && !searchPlants">
+                        <button (click)="limpiar()" class="btn btn-primary btn-lg btn-block"> LIMPIAR
             </button>
                     </div>
                 </form>
@@ -61,7 +55,7 @@
 
             <!-- Plantas con cuervo -->
             <div *ngIf="crowPlants.length > 0" class="row">
-                <h4>Página {{paginaActual}}</h4>
+                <h4>Plantas con cuervos</h4>
                 <table class="table">
                     <thead>
                         <tr>
@@ -82,7 +76,7 @@
 
             <!-- Plantas Menos Regadas -->
             <div *ngIf="plantasMenosRegadas.length > 0" class="row">
-                <h4>Página {{paginaActual}}</h4>
+                <h4>Plantas menos regadas</h4>
                 <table class="table">
                     <thead>
                         <tr>

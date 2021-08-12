@@ -27,10 +27,10 @@ export class AppComponent implements OnInit, OnDestroy {
   plants: Datum[] = [];
   total: number = 0;
   pages: number = 0;
-  paginaActual: number = 0;
+  paginaActual: number = 1;
   crowPlants: Datum[] = [];
   plantasMenosRegadas: any[] = [];
-  manual: boolean = false;
+  searchPlants: boolean = false;
 
   constructor(
     private _plantsService: PlantsService,
@@ -44,35 +44,6 @@ export class AppComponent implements OnInit, OnDestroy {
     });
   }
 
-  avanzarPagina() {
-    this.paginaActual += 1;
-    this.offset += 10;
-    this.searchManual();
-  }
-  
-  searchManual() {
-    this.manual = true;
-
-    this._plantsService
-      .getPlantsByAddress(
-        this.limit.toString(),
-        this.offset.toString(),
-        this.searchForm.value.address,
-        this.searchForm.value.token
-      )
-      .pipe(takeUntil(this.ngUnsubscribe))
-      .subscribe(
-        (result) => {
-          this.plants = result.data;
-          this.total = result.total;
-          this.pages = Math.trunc(this.total / this.limit) + 1;
-        },
-        (error) => {
-          console.log(error);
-        }
-      );
-  }
-
   updateOffset = () => {
     this.offset += 10;
   };
@@ -83,9 +54,9 @@ export class AppComponent implements OnInit, OnDestroy {
 
   searchAutomatico() {
     let contador = 1;
-    
-    this.manual = false;
-    
+
+    this.searchPlants = true;
+
     this.intervalId = setInterval(() => {
       this._plantsService
         .getPlantsByAddress(
@@ -101,17 +72,20 @@ export class AppComponent implements OnInit, OnDestroy {
             this.total = result.total;
             this.pages = Math.trunc(this.total / this.limit) + 1;
 
-            this.getPlantsWithCrow();
-            this.getPlantsMenosRegadas();
+            if (this.plants.length > 0) {
+              this.getPlantsWithCrow();
+              this.getPlantsMenosRegadas();
 
-            if (contador == this.pages) {
-              this.offset = 0;
-              this.paginaActual = 0;
-              clearInterval(this.intervalId);
-            } else {
-              contador += 1;
-              this.updateOffset();
-              this.updatePage();
+              if (contador == this.pages) {
+                this.offset = 0;
+                this.paginaActual = 1;
+                this.searchPlants = false;
+                clearInterval(this.intervalId);
+              } else {
+                contador += 1;
+                this.updateOffset();
+                this.updatePage();
+              }
             }
           },
           (error) => {
@@ -147,10 +121,11 @@ export class AppComponent implements OnInit, OnDestroy {
     let planta = {
       idPlanta: plantaMenosRegada.plantId,
       riegos: menor,
-      pagina: this.paginaActual
+      pagina: this.paginaActual,
     };
 
     this.plantasMenosRegadas.push(planta);
+    this.plantasMenosRegadas.sort((a, b) => a.riegos - b.riegos);
   }
 
   getCantidadRiegos(tools: any[]): any {
@@ -165,13 +140,13 @@ export class AppComponent implements OnInit, OnDestroy {
 
   limpiar() {
     this.offset = 0;
-    this.paginaActual = 0;
+    this.paginaActual = 1;
     this.plants = [];
     this.total = 0;
     this.pages = 0;
     this.crowPlants = [];
-    this.plantasMenosRegadas = [];  
-}
+    this.plantasMenosRegadas = [];
+  }
 
   ngOnDestroy() {
     this.ngUnsubscribe.next();
