@@ -1,18 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>API - Plants</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 </head>
+
 <body>
   <div class="container">
     <div class="row align-items-center justify-content-center">
+      <div class="pt-4 row" *ngIf="plants.length > 0">
+        <button type="submit" (click)="avanzarPagina()" class="btn btn-primary btn-lg btn-block"> ➔ </button>
+      </div>
+
+      <!-- Todas las plantas -->
+      <div *ngIf="plants.length > 0" class="row">
+        <h4>Página {{paginaActual}} de {{pages}}</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Id Planta</th>
+              <th scope="col">Updated Time</th>
+              <th scope="col">Cuervo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let plant of plants">
+              <td>{{ plant.plantId }}</td>
+              <td>{{ plant.updatedAt }}</td>
+              <td>{{ plant.hasCrow }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Plantas con cuervo -->
+      <div *ngIf="crowPlants.length > 0" class="row">
+        <h4>Página {{paginaActual}}</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Id Planta</th>
+              <th scope="col">Updated Time</th>
+              <th scope="col">Cuervo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let crowPlant of crowPlants">
+              <td>{{ crowPlant.plantId }}</td>
+              <td>{{ crowPlant.updatedAt }}</td>
+              <td>{{ crowPlant.hasCrow }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="col-4">
-        <img src="./../assets/Plant-vs-Undead.jpg" alt="Plants Vs Undead" width="300" height="90" style="margin-left: 9vh;">
-        <form [formGroup]="searchForm" (ngSubmit)="searchCrows()">
+        <img src="./../assets/Plant-vs-Undead.jpg" alt="Plants Vs Undead" width="300" height="90"
+          style="margin-left: 9vh;">
+        <form [formGroup]="searchForm" (ngSubmit)="search()">
           <div class="form-group row">
             <input type="text" class="form-control text-center" placeholder="Address" formControlName="address" />
           </div>
@@ -20,55 +70,16 @@
             <input type="text" class="form-control text-center" placeholder="Token" formControlName="token" />
           </div>
           <div class="pt-4 row">
-            <button type="submit" class="btn btn-primary btn-lg btn-block"> BUSCAR </button>
+            <button type="submit" class="btn btn-primary btn-lg btn-block"> BUSQUEDA MANUAL </button>
           </div>
-          <div class="pt-4 row" *ngIf="plants.length > 0">
-            <button type="submit" (click)="avanzarPagina()" class="btn btn-primary btn-lg btn-block"> ➔ </button>
+          <div class="pt-4 row">
+            <button type="submit" (click)="searchCrows()" class="btn btn-primary btn-lg btn-block"> BUSQUEDA AUTOMÁTICA
+            </button>
           </div>
         </form>
       </div>
     </div>
-
-    <div *ngIf="plants.length > 0" class="row">
-      <h4>Página {{paginaActual}} de {{pages}}</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Id Planta</th>
-            <th scope="col">Updated Time</th>
-            <th scope="col">Cuervo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let plant of plants">
-            <td>{{ plant.plantId }}</td>
-            <td>{{ plant.updatedAt }}</td>
-            <td>{{ plant.hasCrow }}</td>            
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div *ngIf="crowPlants.length > 0" class="row">
-      <h4>Página {{paginaActual}}</h4>
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Id Planta</th>
-            <th scope="col">Updated Time</th>
-            <th scope="col">Cuervo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let crowPlant of crowPlants">
-            <td>{{ crowPlant.plantId }}</td>
-            <td>{{ crowPlant.updatedAt }}</td>
-            <td>{{ crowPlant.hasCrow }}</td>            
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
   </div>
 </body>
+
 </html>
