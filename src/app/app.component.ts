@@ -30,7 +30,7 @@ export class AppComponent implements OnInit, OnDestroy {
   paginaActual: number = 0;
   crowPlants: Datum[] = [];
   plantasMenosRegadas: any[] = [];
-  searchPlants: boolean = false;
+  manual: boolean = false;
 
   constructor(
     private _plantsService: PlantsService,
@@ -51,7 +51,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
   
   searchManual() {
-    this.searchPlants = true;
+    this.manual = true;
 
     this._plantsService
       .getPlantsByAddress(
@@ -66,7 +66,6 @@ export class AppComponent implements OnInit, OnDestroy {
           this.plants = result.data;
           this.total = result.total;
           this.pages = Math.trunc(this.total / this.limit) + 1;
-          this.searchPlants = false;
         },
         (error) => {
           console.log(error);
@@ -84,7 +83,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   searchAutomatico() {
     let contador = 1;
-    this.searchPlants = true;
+    
+    this.manual = false;
     
     this.intervalId = setInterval(() => {
       this._plantsService
@@ -107,7 +107,6 @@ export class AppComponent implements OnInit, OnDestroy {
             if (contador == this.pages) {
               this.offset = 0;
               this.paginaActual = 0;
-              this.searchPlants = false;
               clearInterval(this.intervalId);
             } else {
               contador += 1;
@@ -148,6 +147,7 @@ export class AppComponent implements OnInit, OnDestroy {
     let planta = {
       idPlanta: plantaMenosRegada.plantId,
       riegos: menor,
+      pagina: this.paginaActual
     };
 
     this.plantasMenosRegadas.push(planta);
@@ -162,6 +162,16 @@ export class AppComponent implements OnInit, OnDestroy {
       return toolActual.count;
     }
   }
+
+  limpiar() {
+    this.offset = 0;
+    this.paginaActual = 0;
+    this.plants = [];
+    this.total = 0;
+    this.pages = 0;
+    this.crowPlants = [];
+    this.plantasMenosRegadas = [];  
+}
 
   ngOnDestroy() {
     this.ngUnsubscribe.next();
