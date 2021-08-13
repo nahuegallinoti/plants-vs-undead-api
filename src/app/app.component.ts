@@ -75,8 +75,9 @@ export class AppComponent implements OnInit, OnDestroy {
         riegos: this.getCantidadRiegos(plantaActual.activeTools),
         pagina: paginaActual,
         address: plantaActual.ownerId,
-        coordenada: plantaActual.land.x + '/' + plantaActual.land.y,
-        horaReseteo: plantaActual.startTime
+        // coordenada: plantaActual.land.x + '/' + plantaActual.land.y,
+        horaReseteo: plantaActual.startTime,
+        hasCrow: plantaActual.hasCrow ? "SI" : "NO"
       };
 
       this.plantasMenosRegadas.push(planta);
