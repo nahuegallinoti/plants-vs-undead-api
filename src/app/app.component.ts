@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { PlantsService } from './Services/plants-service';
-import { delay, takeUntil } from 'rxjs/operators';
+import { delay, map, takeUntil } from 'rxjs/operators';
 import {
   FormBuilder,
   FormControl,
@@ -21,18 +21,15 @@ import { HttpClient } from '@angular/common/http';
 export class AppComponent implements OnInit, OnDestroy {
   private ngUnsubscribe = new Subject();
 
-  intervalId: any;
   searchForm: FormGroup;
-  offset: number = 0;
-  limit: number = 10;
-  plants: Datum[] = [];
-  total: number = 0;
-  pages: number = 0;
-  paginaActual: number = 1;
+
   crowPlants: any[] = [];
   plantasMenosRegadas: any[] = [];
-  searchPlants: boolean = false;
   addressGlobal: any[] = [];
+
+  searchPlants: boolean = false;
+  addressCargadas: boolean = false;
+  addressesFromFile: any[] = [];
 
   constructor(
     private _plantsService: PlantsService,
@@ -49,79 +46,26 @@ export class AppComponent implements OnInit, OnDestroy {
       xHasta: new FormControl('', [Validators.required]),
       yDesde: new FormControl('', [Validators.required]),
       yHasta: new FormControl('', [Validators.required]),
-
     });
   }
 
-  updateOffset = () => {
-    this.offset += 10;
-  };
+  // getPlantsWithCrow() {
+  //   for (let i = 0; i < this.plants.length; i++) {
+  //     let plantaActual = this.plants[i];
 
-  updatePage = () => {
-    this.paginaActual += 1;
-  };
+  //     if (plantaActual.hasCrow) {
+  //       let planta = {
+  //         idPlanta: plantaActual.plantId,
+  //         hasCrow: plantaActual.hasCrow,
+  //         pagina: this.paginaActual,
+  //         coordenada: plantaActual.land.x + '/' + plantaActual.land.y,
+  //       };
+  //       this.crowPlants.push(planta);
+  //     }
+  //   }
+  // }
 
-  searchAutomatico() {
-    let contador = 1;
-
-    this.searchPlants = true;
-
-    this.intervalId = setInterval(() => {
-      this._plantsService
-        .getPlantsByAddress(
-          this.limit.toString(),
-          this.offset.toString(),
-          this.searchForm.value.address,
-          this.searchForm.value.token
-        )
-        .pipe(takeUntil(this.ngUnsubscribe))
-        .subscribe(
-          (result) => {
-            this.plants = result.data;
-            this.total = result.total;
-            this.pages = Math.trunc(this.total / this.limit) + 1;
-
-            if (this.plants.length > 0) {
-              this.getPlantsWithCrow();
-              this.getPlantsMenosRegadas(this.plants);
-
-              if (contador == this.pages) {
-                this.offset = 0;
-                this.paginaActual = 1;
-                this.searchPlants = false;
-                clearInterval(this.intervalId);
-              } else {
-                contador += 1;
-                this.updateOffset();
-                this.updatePage();
-              }
-            }
-          },
-          (error) => {
-            console.log(error);
-          }
-        );
-    }, 2000);
-  }
-
-  getPlantsWithCrow() {
-    for (let i = 0; i < this.plants.length; i++) {
-      let plantaActual = this.plants[i];
-      
-      if (plantaActual.hasCrow) {
-
-        let planta = {
-          idPlanta: plantaActual.plantId,
-          hasCrow: plantaActual.hasCrow,
-          pagina: this.paginaActual,
-          coordenada: plantaActual.land.x + '/' + plantaActual.land.y
-        };
-          this.crowPlants.push(planta);
-    }
-    }
-  }
-
-  getPlantsMenosRegadas(plants: Datum[]) {
+  getPlantsMenosRegadas(plants: Datum[], paginaActual: number) {
     let plantId = 0;
     let menor = 999;
 
@@ -140,9 +84,9 @@ export class AppComponent implements OnInit, OnDestroy {
     let planta = {
       idPlanta: plantaMenosRegada.plantId,
       riegos: menor,
-      pagina: this.paginaActual,
+      pagina: paginaActual,
       address: plantaMenosRegada.ownerId,
-      coordenada: plantaMenosRegada.land.x + '/' + plantaMenosRegada.land.y
+      coordenada: plantaMenosRegada.land.x + '/' + plantaMenosRegada.land.y,
     };
 
     this.plantasMenosRegadas.push(planta);
@@ -160,19 +104,21 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   limpiar() {
-    this.offset = 0;
-    this.paginaActual = 1;
-    this.plants = [];
-    this.total = 0;
-    this.pages = 0;
     this.crowPlants = [];
     this.plantasMenosRegadas = [];
   }
 
   generateAddressByLand() {
-    //falta un set interval o algo de eso
-    for (let x = this.searchForm.value.xDesde; x <= this.searchForm.value.xHasta; x++) {
-      for (let y = this.searchForm.value.yDesde; y <= this.searchForm.value.yHasta; y++) {
+    for (
+      let x = this.searchForm.value.xDesde;
+      x <= this.searchForm.value.xHasta;
+      x++
+    ) {
+      for (
+        let y = this.searchForm.value.yDesde;
+        y <= this.searchForm.value.yHasta;
+        y++
+      ) {
         this._landService
           .getAddressByCoordenada(
             x.toString(),
@@ -190,68 +136,65 @@ export class AppComponent implements OnInit, OnDestroy {
               console.log(error);
             }
           );
-
       }
     }
   }
 
-  plantsMenosRegadasByLand() {
-    this.http
-      .get('assets/adressByLand.txt', { responseType: 'text' as 'json' })
-      .subscribe((data: string) => {
-        let adresses = data.split(',');
+  plantsMenosRegadasByAddress() {
+    let intervalId = setInterval(() => {
+      this.searchPlantsByAdress(this.addressesFromFile[0]);
+      this.addressesFromFile.shift();
 
-        adresses.forEach((address) => {
-          this.searchPlantsByAdress(address);
-        });
-      });
+      if (this.addressesFromFile.length == 0) {
+        clearInterval(intervalId);
+        alert('Busqueda terminada');
+      }
+    }, 15000);
+  }
+
+  loadAdressFromFile() {
+    this.readAdressFromFile().subscribe((resultado: string) => {
+      let arr = resultado.split(',');
+      arr.forEach((x) => this.addressesFromFile.push(x));
+      this.addressCargadas = true;
+      alert('Adressess cargadas');
+    });
+  }
+
+  readAdressFromFile(): Observable<any> {
+    return this.http.get('assets/adressByLand.txt', {
+      responseType: 'text' as 'json',
+    });
   }
 
   searchPlantsByAdress(address: string) {
-    let contador = 1;
+    let limit = 10;
+    let offset = 0;
+    let paginaActual = 1;
+    let totalPages = 0;
+    let intervalId: any;
 
-    this.searchPlants = true;
-
-    this.intervalId = setInterval(() => {
+    intervalId = setInterval(() => {
       this._plantsService
         .getPlantsByAddress(
-          this.limit.toString(),
-          this.offset.toString(),
+          limit.toString(),
+          offset.toString(),
           address,
           this.searchForm.value.token
         )
         .pipe(takeUntil(this.ngUnsubscribe))
-        .subscribe(
-          (result) => {
-            result.data.forEach(plant => {
-              this.plants.push(plant);
-            });
-            
-            // this.plants = result.data;
-            this.total = result.total;
-            this.pages = Math.trunc(this.total / this.limit) + 1;
+        .subscribe((result) => {
+          this.getPlantsMenosRegadas(result.data, paginaActual);
 
-            if (this.plants.length > 0) {
-              this.getPlantsWithCrow();
-              this.getPlantsMenosRegadas(this.plants);
-
-              if (contador == this.pages) {
-                this.offset = 0;
-                this.paginaActual = 1;
-                this.searchPlants = false;
-                clearInterval(this.intervalId);
-              } else {
-                contador += 1;
-                this.updateOffset();
-                this.updatePage();
-              }
-            }
-          },
-          (error) => {
-            console.log(error);
+          //revisar
+          totalPages = Math.round(result.total / limit);
+          if (paginaActual > totalPages) {
+            clearInterval(intervalId);
           }
-        );
-    }, 2000);
+          offset += 10;
+          paginaActual += 1;
+        });
+    }, 3000);
   }
 
   ngOnDestroy() {
