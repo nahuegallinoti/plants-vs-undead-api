@@ -76,12 +76,23 @@ export class AppComponent implements OnInit, OnDestroy {
         pagina: paginaActual,
         address: plantaActual.ownerId,
         // coordenada: plantaActual.land.x + '/' + plantaActual.land.y,
-        horaReseteo: plantaActual.startTime,
+        horaReseteo: this.getFechaReseteo(plantaActual.activeTools),
         hasCrow: plantaActual.hasCrow ? "SI" : "NO"
       };
 
       this.plantasMenosRegadas.push(planta);
+      this.plantasMenosRegadas.sort((a, b) => a.riegos - b.riegos);
 
+    }
+  }
+
+  getFechaReseteo(tools: any[]): any {
+    for (let j = 0; j < tools.length; j++) {
+      let toolActual = tools[j];
+
+      if (toolActual.type != 'WATER') continue;
+
+      return toolActual.startTime;
     }
   }
 
