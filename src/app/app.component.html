@@ -14,7 +14,7 @@
         <div class="row align-items-center justify-content-center">
 
             <div class="col-4">
-                <img src="./../assets/Plant-vs-Undead.jpg" alt="Plants Vs Undead" width="300" height="90" style="margin-left: 8vh; margin-top: 10px;">
+                <img src="./../assets/Plant-vs-Undead.jpg" alt="Plants Vs Undead" width="300" height="90" style="margin-left: 2.5vw; margin-top: 10px;">
                 <form [formGroup]="searchForm" (ngSubmit)="searchAutomatico()">
                     <div class="form-group row">
                         <input type="text" class="form-control text-center" placeholder="Address" formControlName="address" />
@@ -22,8 +22,27 @@
                     <div class="form-group row">
                         <input type="text" class="form-control text-center" placeholder="Token" formControlName="token" />
                     </div>
+                    <div class="form-group row">
+                        <input type="number" class="form-control text-center" placeholder="X Desde (-16 / 16)" formControlName="xDesde" />
+                    </div>
+                    <div class="form-group row">
+                        <input type="number" class="form-control text-center" placeholder="X Hasta (-16 / 16)" formControlName="xHasta" />
+                    </div>
+                    <div class="form-group row">
+                        <input type="number" class="form-control text-center" placeholder="Y Desde (-16 / 16)" formControlName="yDesde" />
+                    </div>
+                    <div class="form-group row">
+                        <input type="number" class="form-control text-center" placeholder="Y Hasta (-16 / 16)" formControlName="yHasta" />
+                    </div>
+
                     <div class="pt-4 row">
                         <button type="submit" class="btn btn-primary btn-lg btn-block"> BUSCAR </button>
+                    </div>
+                    <div class="pt-4 row">
+                        <button (click)="generateAddressByLand()" class="btn btn-primary btn-lg btn-block"> MOSTRAR ADDRESS X LAND </button>
+                    </div>
+                    <div class="pt-4 row">
+                        <button (click)="plantsMenosRegadasByLand()" class="btn btn-primary btn-lg btn-block"> OBTENER PLANTAS - REGADAS X LAND </button>
                     </div>
                     <div class="pt-4 row" *ngIf="plantasMenosRegadas.length > 0 && !searchPlants">
                         <button (click)="limpiar()" class="btn btn-primary btn-lg btn-block"> LIMPIAR
@@ -32,8 +51,24 @@
                 </form>
             </div>
 
+            <!-- Addresses por land -->
+            <div *ngIf="addressGlobal.length > 0" class="row">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let address of addressGlobal">
+                            <td>{{ address }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Todas las plantas -->
-            <div *ngIf="plants.length > 0" class="row">
+            <!-- <div *ngIf="plants.length > 0" class="row">
                 <h4>Página {{paginaActual}} de {{pages}}</h4>
                 <table class="table">
                     <thead>
@@ -52,7 +87,7 @@
                     </tbody>
                 </table>
             </div>
-
+ -->
             <!-- Plantas con cuervo -->
             <div *ngIf="crowPlants.length > 0" class="row">
                 <h4>Plantas con cuervos</h4>
@@ -60,15 +95,17 @@
                     <thead>
                         <tr>
                             <th scope="col">Id Planta</th>
-                            <th scope="col">Updated Time</th>
                             <th scope="col">Cuervo</th>
+                            <th scope="col">Pagina</th>
+                            <th scope="col">Coordenada</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let crowPlant of crowPlants">
-                            <td>{{ crowPlant.plantId }}</td>
-                            <td>{{ crowPlant.updatedAt }}</td>
+                            <td>{{ crowPlant.idPlanta }}</td>
                             <td>{{ crowPlant.hasCrow }}</td>
+                            <td>{{ crowPlant.pagina }}</td>
+                            <td>{{ crowPlant.coordenada }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -83,6 +120,8 @@
                             <th scope="col">Id Planta</th>
                             <th scope="col">Riegos</th>
                             <th scope="col">Página</th>
+                            <th scope="col">Coordenada</th>
+                            <!-- <th scope="col">Address</th> -->
                         </tr>
                     </thead>
                     <tbody>
@@ -90,6 +129,8 @@
                             <td>{{ planta.idPlanta }}</td>
                             <td>{{ planta.riegos }}</td>
                             <td>{{ planta.pagina }}</td>
+                            <td>{{ planta.coordenada }}</td>
+                            <!-- <td>{{ planta.address }}</td> -->
                         </tr>
                     </tbody>
                 </table>

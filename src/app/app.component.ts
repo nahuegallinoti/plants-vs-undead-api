@@ -1,16 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlantsService } from './Services/plants-service';
-import { takeUntil } from 'rxjs/operators';
+import { delay, takeUntil } from 'rxjs/operators';
 import {
   FormBuilder,
   FormControl,
   FormGroup,
+  SelectMultipleControlValueAccessor,
   Validators,
 } from '@angular/forms';
-import { i18nMetaToJSDoc } from '@angular/compiler/src/render3/view/i18n/meta';
 import { Datum } from './Models/Plant';
-import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
+import { LandService } from './Services/land.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
@@ -28,19 +29,27 @@ export class AppComponent implements OnInit, OnDestroy {
   total: number = 0;
   pages: number = 0;
   paginaActual: number = 1;
-  crowPlants: Datum[] = [];
+  crowPlants: any[] = [];
   plantasMenosRegadas: any[] = [];
   searchPlants: boolean = false;
+  addressGlobal: any[] = [];
 
   constructor(
     private _plantsService: PlantsService,
-    private formBuilder: FormBuilder
+    private _landService: LandService,
+    private formBuilder: FormBuilder,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
     this.searchForm = this.formBuilder.group({
       address: new FormControl('', [Validators.required]),
       token: new FormControl('', [Validators.required]),
+      xDesde: new FormControl('', [Validators.required]),
+      xHasta: new FormControl('', [Validators.required]),
+      yDesde: new FormControl('', [Validators.required]),
+      yHasta: new FormControl('', [Validators.required]),
+
     });
   }
 
@@ -74,7 +83,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
             if (this.plants.length > 0) {
               this.getPlantsWithCrow();
-              this.getPlantsMenosRegadas();
+              this.getPlantsMenosRegadas(this.plants);
 
               if (contador == this.pages) {
                 this.offset = 0;
@@ -98,16 +107,26 @@ export class AppComponent implements OnInit, OnDestroy {
   getPlantsWithCrow() {
     for (let i = 0; i < this.plants.length; i++) {
       let plantaActual = this.plants[i];
-      plantaActual.hasCrow ? this.crowPlants.push(plantaActual) : '';
+      
+      if (plantaActual.hasCrow) {
+
+        let planta = {
+          idPlanta: plantaActual.plantId,
+          hasCrow: plantaActual.hasCrow,
+          pagina: this.paginaActual,
+          coordenada: plantaActual.land.x + '/' + plantaActual.land.y
+        };
+          this.crowPlants.push(planta);
+    }
     }
   }
 
-  getPlantsMenosRegadas() {
+  getPlantsMenosRegadas(plants: Datum[]) {
     let plantId = 0;
     let menor = 999;
 
-    for (let i = 0; i < this.plants.length; i++) {
-      let plantaActual = this.plants[i];
+    for (let i = 0; i < plants.length; i++) {
+      let plantaActual = plants[i];
       let cantidadRiegos = this.getCantidadRiegos(plantaActual.activeTools);
 
       if (cantidadRiegos <= menor) {
@@ -116,12 +135,14 @@ export class AppComponent implements OnInit, OnDestroy {
       }
     }
 
-    let plantaMenosRegada = this.plants.find((p) => p.plantId == plantId);
+    let plantaMenosRegada = plants.find((p) => p.plantId == plantId);
 
     let planta = {
       idPlanta: plantaMenosRegada.plantId,
       riegos: menor,
       pagina: this.paginaActual,
+      address: plantaMenosRegada.ownerId,
+      coordenada: plantaMenosRegada.land.x + '/' + plantaMenosRegada.land.y
     };
 
     this.plantasMenosRegadas.push(planta);
@@ -146,6 +167,87 @@ export class AppComponent implements OnInit, OnDestroy {
     this.pages = 0;
     this.crowPlants = [];
     this.plantasMenosRegadas = [];
+  }
+
+  generateAddressByLand() {
+    //falta un set interval o algo de eso
+    for (let x = this.searchForm.value.xDesde; x <= this.searchForm.value.xHasta; x++) {
+      for (let y = this.searchForm.value.yDesde; y <= this.searchForm.value.yHasta; y++) {
+        this._landService
+          .getAddressByCoordenada(
+            x.toString(),
+            y.toString(),
+            this.searchForm.value.token
+          )
+          .pipe(takeUntil(this.ngUnsubscribe))
+          .subscribe(
+            (result) => {
+              result.data.ownerId != ''
+                ? this.addressGlobal.push(result.data.ownerId + ',')
+                : '';
+            },
+            (error) => {
+              console.log(error);
+            }
+          );
+
+      }
+    }
+  }
+
+  plantsMenosRegadasByLand() {
+    this.http
+      .get('assets/adressByLand.txt', { responseType: 'text' as 'json' })
+      .subscribe((data: string) => {
+        let adresses = data.split(',');
+
+        adresses.forEach((address) => {
+          this.searchPlantsByAdress(address);
+        });
+      });
+  }
+
+  searchPlantsByAdress(address: string) {
+    let contador = 1;
+
+    this.searchPlants = true;
+
+    this.intervalId = setInterval(() => {
+      this._plantsService
+        .getPlantsByAddress(
+          this.limit.toString(),
+          this.offset.toString(),
+          address,
+          this.searchForm.value.token
+        )
+        .pipe(takeUntil(this.ngUnsubscribe))
+        .subscribe(
+          (result) => {
+            this.plants = result.data;
+            this.total = result.total;
+            this.pages = Math.trunc(this.total / this.limit) + 1;
+
+            if (this.plants.length > 0) {
+              this.getPlantsWithCrow();
+              this.getPlantsMenosRegadas(this.plants);
+
+              if (contador == this.pages) {
+                this.offset = 0;
+                this.paginaActual = 1;
+                this.searchPlants = false;
+                clearInterval(this.intervalId);
+              } else {
+                contador += 1;
+                this.updateOffset();
+                this.updatePage();
+              }
+            }
+          },
+          (error) => {
+            console.log(error);
+          }
+        );
+    }, 2000);
   }
 
   ngOnDestroy() {
