@@ -223,7 +223,11 @@ export class AppComponent implements OnInit, OnDestroy {
         .pipe(takeUntil(this.ngUnsubscribe))
         .subscribe(
           (result) => {
-            this.plants = result.data;
+            result.data.forEach(plant => {
+              this.plants.push(plant);
+            });
+            
+            // this.plants = result.data;
             this.total = result.total;
             this.pages = Math.trunc(this.total / this.limit) + 1;
 
