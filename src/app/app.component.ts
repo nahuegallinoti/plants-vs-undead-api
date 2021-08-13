@@ -66,31 +66,22 @@ export class AppComponent implements OnInit, OnDestroy {
   // }
 
   getPlantsMenosRegadas(plants: Datum[], paginaActual: number) {
-    let plantId = 0;
-    let menor = 999;
 
     for (let i = 0; i < plants.length; i++) {
       let plantaActual = plants[i];
-      let cantidadRiegos = this.getCantidadRiegos(plantaActual.activeTools);
 
-      if (cantidadRiegos <= menor) {
-        plantId = plantaActual.plantId;
-        menor = cantidadRiegos;
-      }
+      let planta = {
+        idPlanta: plantaActual.plantId,
+        riegos: this.getCantidadRiegos(plantaActual.activeTools),
+        pagina: paginaActual,
+        address: plantaActual.ownerId,
+        coordenada: plantaActual.land.x + '/' + plantaActual.land.y,
+        horaReseteo: plantaActual.startTime
+      };
+
+      this.plantasMenosRegadas.push(planta);
+
     }
-
-    let plantaMenosRegada = plants.find((p) => p.plantId == plantId);
-
-    let planta = {
-      idPlanta: plantaMenosRegada.plantId,
-      riegos: menor,
-      pagina: paginaActual,
-      address: plantaMenosRegada.ownerId,
-      coordenada: plantaMenosRegada.land.x + '/' + plantaMenosRegada.land.y,
-    };
-
-    this.plantasMenosRegadas.push(planta);
-    this.plantasMenosRegadas.sort((a, b) => a.riegos - b.riegos);
   }
 
   getCantidadRiegos(tools: any[]): any {
@@ -140,7 +131,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  plantsMenosRegadasByAddress() {
+  plantsByAddress() {
     let intervalId = setInterval(() => {
       this.searchPlantsByAdress(this.addressesFromFile[0]);
       this.addressesFromFile.shift();

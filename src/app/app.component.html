@@ -42,7 +42,7 @@
                         <button (click)="loadAdressFromFile()" class="btn btn-primary btn-lg btn-block"> LOAD ADDRESSES </button>
                     </div>
                     <div class="pt-4 row" *ngIf="addressCargadas">
-                        <button (click)="plantsMenosRegadasByAddress()" class="btn btn-primary btn-lg btn-block"> OBTENER PLANTAS - REGADAS X LAND </button>
+                        <button (click)="plantsByAddress()" class="btn btn-primary btn-lg btn-block"> OBTENER PLANTAS X LAND </button>
                     </div>
                     <div class="pt-4 row" *ngIf="plantasMenosRegadas.length > 0 && !searchPlants">
                         <button (click)="limpiar()" class="btn btn-primary btn-lg btn-block"> LIMPIAR
@@ -100,6 +100,7 @@
                             <th scope="col">Riegos</th>
                             <th scope="col">Página</th>
                             <th scope="col">Coordenada</th>
+                            <th scope="col">Hora Reseteo</th>
                             <!-- <th scope="col">Address</th> -->
                         </tr>
                     </thead>
@@ -109,6 +110,7 @@
                             <td>{{ planta.riegos }}</td>
                             <td>{{ planta.pagina }}</td>
                             <td>{{ planta.coordenada }}</td>
+                            <td>{{ planta.horaReseteo }}</td>
                             <!-- <td>{{ planta.address }}</td> -->
                         </tr>
                     </tbody>
