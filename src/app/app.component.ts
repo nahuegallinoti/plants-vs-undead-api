@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { PlantsService } from './Services/plants-service';
+import { PlantsService } from './Services/plants.service';
 import { delay, map, takeUntil } from 'rxjs/operators';
 import {
   FormBuilder,
